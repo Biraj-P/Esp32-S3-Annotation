@@ -92,11 +92,10 @@ while True:
     elapsed_sec = 0
     if touch_gesture in (1, 2, 3, 4):
         start_time = utime.ticks_ms()
-        new_gesture = touch_gesture
-        # Annotating display
+        initial_gesture = touch_gesture  # Store the initial gesture
         tft.fill(0)
         tft.text(font, message_Ano, x_pos1, y_pos1, gc9a01.GREEN)
-
+    
         if touch_gesture == 1:
             activity = "Walking"
         elif touch_gesture == 2:
@@ -105,26 +104,33 @@ while True:
             activity = "Standing"
         elif touch_gesture == 4:
             activity = "Running"
-        
+    
         tft.text(font, f"{activity}", x_pos1 + 20, y_pos1 + font.HEIGHT + 10, gc9a01.YELLOW)
-        
-        # Record the start time and calculate the elapsed time continuously
-        while touch.get_gesture() in (1, 2, 3, 4):
+    
+        while True:
+            current_gesture = touch.get_gesture()  # Get the latest gesture
+    
+            # Break the loop if the same gesture is made again
+            if current_gesture == initial_gesture:
+                break
+            
             end_time = utime.ticks_ms()
             elapsed = utime.ticks_diff(end_time, start_time)
             elapsed_sec = elapsed / 1000  # Convert to seconds
-            
+    
             acc_xyz = qmi8658.Read_acclXYZ()
             gyro_xyz = qmi8658.Read_gyroXYZ()
-            # Update elapsed time on display
+    
             tft.text(font, f"Time: {elapsed_sec:.2f}s", x_pos1, font.HEIGHT + 30, gc9a01.CYAN)
-            
+    
             log_data = f"{timestamp},{elapsed_sec},{acc_xyz[0]},{acc_xyz[1]},{acc_xyz[2]},{gyro_xyz[3]},{gyro_xyz[4]},{gyro_xyz[5]},{activity}\n"
             print(log_data.strip())
-
+    
             log_file.write(log_data)
             log_file.flush()
+    
             time.sleep(0.01)  # Small delay to prevent excessive CPU usage
+
             
 
     else:
